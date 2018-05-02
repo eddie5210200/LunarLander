@@ -1,0 +1,51 @@
+#pragma once
+//  Kevin M. Smith - CS 134 SJSU
+
+#include "Particle.h"
+#include "ParticleSystem.h"
+#include "TransformObject.h"
+
+typedef enum { DirectionalEmitter, RadialEmitter, SphereEmitter, DiscEmitter } EmitterType;
+
+//  General purpose Emitter class for emitting sprites
+//  This works similar to a Particle emitter
+//
+class ParticleEmitter : public TransformObject {
+public:
+	ParticleEmitter();
+	ParticleEmitter(ParticleSystem *s);
+	~ParticleEmitter();
+	void init();
+	void draw();
+	void start();
+	void stop();
+	void setLifespan(const float life) { lifespan = life; }
+	void setMass(const float m) { mass = m; }
+	void setVelocity(const ofVec3f &vel) { velocity = vel; }
+	void setRate(const float r) { rate = r; }
+	void setParticleRadius(const float r) { particleRadius = r; }
+	void setEmitterType(EmitterType t) { type = t; }
+	void setGroupSize(int s) { groupSize = s; }
+	void setColor(ofColor c) { color = c; }
+	void setOneShot(bool s) { oneShot = s; }
+	void update();
+	void spawn(float time);
+	void setPosition(ofVec3f pos) { TransformObject::setPosition(pos); };
+	ParticleSystem *sys;
+	float rate;         // per sec
+	bool oneShot;
+	bool fired;
+	ofVec3f velocity;
+	float lifespan;     // sec
+	bool started;
+	float lastSpawned;  // ms
+	float particleRadius;
+	float mass;
+	float radius;
+	float discradius;
+	bool visible;
+	int groupSize;      // number of particles to spawn in a group
+	ofColor color;
+	bool createdSys;
+	EmitterType type;
+};
