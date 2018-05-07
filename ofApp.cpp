@@ -64,7 +64,7 @@ void ofApp::setup(){
     
     gui.setup();
     gui.add(sliderOctreeDepth.setup("Octree display depth", 0, 0, octreeHighestDepth));
-    gui.add(gravity.setup("Gravity", 0.1, 0, 20));
+    gui.add(gravity.setup("Gravity", 0.1, 0, 2));
     
     //  setup emitter (for engine)
     //
@@ -79,7 +79,7 @@ void ofApp::setup(){
     sys.add(ship);
     
     sys.addForce(&thruster);
-    sys.addForce(new TurbulenceForce(ofVec3f(-0.02, -0.01, -0.03), ofVec3f(0.01, 0.02, 0.05)));
+    //sys.addForce(new TurbulenceForce(ofVec3f(-0.02, -0.01, -0.03), ofVec3f(0.01, 0.02, 0.05)));
     sys.addForce(new GravityForce(ofVec3f(0, -gravity, 0)));
 }
 
@@ -90,7 +90,7 @@ void ofApp::update() {
     
     sys.update();
     engine.update();
-    engine.setPosition(sys.particles[0].position);
+    engine.setPosition(sys.particles[0].position); // this updates the thruster position to "ship" which is the 1st particle
 }
 
 //--------------------------------------------------------------
@@ -108,7 +108,7 @@ void ofApp::draw() {
     
     // draw engine output
     //
-    //engine.setPosition(ship.position);
+    engine.setPosition(sys.particles[0].position);
     engine.draw();
     
     ofPushMatrix();
@@ -251,18 +251,28 @@ void ofApp::keyPressed(int key) {
         case 'f':
             ofToggleFullscreen();
             break;
-        case OF_KEY_UP:
+            
+        // have LEFT/RIGHT move in the X coordinate plane
+        // have UP/DOWN move in the Z coordinate plane
+        // have SPACEBAR be the only way to thruster up
+        case OF_KEY_DOWN:
+            thruster.add(ofVec3f(0, 0, 0.5)); // was 0, 0.5, 0
+            engine.setVelocity(ofVec3f(0, 0, -5)); // was 0, -5, 0
+            engine.start();
+            break;
+        case ' ': // to move the ship upwards
            // playSound();
             thruster.add(ofVec3f(0, .5, 0));
             engine.setVelocity(ofVec3f(0, -5, 0));
             engine.start();
             break;
-        case OF_KEY_DOWN:
+        case OF_KEY_UP:
            // playSound();
-            thruster.add(ofVec3f(0, -.5, 0));
-            engine.setVelocity(ofVec3f(0, 5, 0));
+            thruster.add(ofVec3f(0, 0, -0.5)); // was 0, -0.5, 0
+            engine.setVelocity(ofVec3f(0, 0, 5)); // was 0, 5, 0
             engine.start();
             break;
+            
         case OF_KEY_LEFT:
             //playSound();
             thruster.add(ofVec3f(-.5, 0, 0));
@@ -271,8 +281,8 @@ void ofApp::keyPressed(int key) {
             break;
         case OF_KEY_RIGHT:
           //  playSound();
-            thruster.add(ofVec3f(.3, 0, 0));
-            engine.setVelocity(ofVec3f(-2, 0, 0));
+            thruster.add(ofVec3f(.5, 0, 0));
+            engine.setVelocity(ofVec3f(-5, 0, 0));
             engine.start();
             break;
         case 'H':
@@ -340,6 +350,7 @@ void ofApp::togglePointSelectedOctree() {
 
 void ofApp::keyReleased(int key) {
     switch (key) {
+        case ' ':
         case OF_KEY_RIGHT:
         case OF_KEY_LEFT:
         case OF_KEY_UP:
