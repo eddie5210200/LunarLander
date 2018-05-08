@@ -14,19 +14,24 @@ Particle::Particle() {
 	radius = .1;
 	damping = .99;
 	mass = 1;
-	color = ofColor::red;
+    color = ofColor::red;
+    colorLifetime = 1;
 }
 
 void Particle::draw() {
-	//shader color
-	ofSetColor(color);
-	//red -> orange -> fade 
-	if (color.g < 165) {
-		color.g += 5;
-	}
-	else if ((ofGetElapsedTimeMillis() - birthtime) / 1000.0 > lifespan * 3 / 4) {
-		color = ofColor(155, 155, 155);
-	}
+    // interpolation
+    // hue: 0 -> 25 (red -> orange)
+    // saturation: 255 -> 0
+    // brightness: 255 -> 0
+    // alpha: 50 -> 0
+    float newHue = 0 + (25.0 / (1000.0 * colorLifetime)) * (ofGetElapsedTimeMillis() - birthtime);
+    float newSaturation = 255 - (255.0 / (1000.0 * colorLifetime)) * (ofGetElapsedTimeMillis() - birthtime);
+    float newBrightness = 255 - (255.0 / (1000.0 * colorLifetime)) * (ofGetElapsedTimeMillis() - birthtime);
+    float newAlpha = 50.0 - (50.0 / (1000.0 * colorLifetime)) * (ofGetElapsedTimeMillis() - birthtime);
+    
+    color.setHsb(newHue, newSaturation, newBrightness, newAlpha);
+
+    ofSetColor(color);
 	ofDrawSphere(position, radius);
 }
 
@@ -68,5 +73,3 @@ void Particle::integrate() {
 float Particle::age() {
 	return (ofGetElapsedTimeMillis() - birthtime)/1000.0;
 }
-
-

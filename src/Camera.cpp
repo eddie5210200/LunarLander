@@ -14,7 +14,7 @@ void Camera::setup() {
 
 	down_view.setNearClip(.1);
 	down_view.setFov(65.5);
-	down_view.setLensOffset(ofVec2f(0, -3)); //or 270 to look downward
+	//down_view.setLensOffset(ofVec2f(0, -3)); //or 270 to look downward
 
 	far_view.setDistance(50);
 	far_view.setFarClip(2000);
@@ -36,6 +36,7 @@ void Camera::camera_begin() {
 	case 1:
 		//ofTranslate(spacecraft);
 		down_view.setPosition(spacecraft);
+        far_view.setTarget(spacecraft - ofVec3f(0, -1, 0));
 		down_view.begin();
 		break;
 	case 2:

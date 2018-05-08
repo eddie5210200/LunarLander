@@ -90,7 +90,7 @@ public:
     ParticleSystem sys;
 	ParticleEmitter thruster_emitter;
     ThrusterForce thruster;
-    ParticleEmitter engine;
+    //ParticleEmitter engine;
     Particle ship;
 
 	//Camera

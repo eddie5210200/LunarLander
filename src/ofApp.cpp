@@ -86,19 +86,19 @@ void ofApp::setup() {
 
 	//  setup emitter (for engine)
 	//
-	engine.setRate(20);
-	engine.setParticleRadius(.050);
-	engine.visible = false;
+	//engine.setRate(20);
+	//engine.setParticleRadius(.050);
+	//engine.visible = false;
 	
 
 	// setup thruster emission effect
 	//thruster_emitter.sys->addForce(new GravityForce(ofVec3f(0, -2*gravity, 0)));
 	thruster_emitter.setVelocity(ofVec3f(0, 0, 0));
-	thruster_emitter.setGroupSize(100);
+	thruster_emitter.setGroupSize(50);
 	thruster_emitter.setEmitterType(DiscEmitter);
 	thruster_emitter.setColor(ofColor(255, 0, 0));
 	thruster_emitter.setPosition(ofVec3f(0, 10, 0));
-	thruster_emitter.setLifespan(1);
+	thruster_emitter.setLifespan(0.5);
 	thruster_emitter.setRate(1000.0);
 	thruster_emitter.setParticleRadius(.1);
 	thruster_emitter.setMass(10);
@@ -113,7 +113,7 @@ void ofApp::setup() {
 
 	sys.addForce(&thruster);
 	sys.addForce(&impulseForce);
-	sys.addForce(new TurbulenceForce(ofVec3f(-0.2, -0.1, -0.3), ofVec3f(0.1, 0.2, 0.5)));
+	//sys.addForce(new TurbulenceForce(ofVec3f(-0.2, -0.1, -0.3), ofVec3f(0.1, 0.2, 0.5)));
 	sys.addForce(new GravityForce(ofVec3f(0, -gravity, 0)));
 }
 
@@ -123,10 +123,11 @@ void ofApp::setup() {
 void ofApp::update() {
 	if (!landed) {
 		sys.update();
-		engine.update();
-		engine.setPosition(sys.particles[0].position);
+		//engine.update();
+		//engine.setPosition(sys.particles[0].position);
 		thruster_emitter.update();
-		rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+		rover.setPosition(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z);
+        thruster_emitter.setPosition(sys.particles[0].position + ofVec3f(0, 0.4, 0));
 		// check if rover point intersects with terrain mesh
 		// if list is not empty, print out first point collided
 		vector<int> selectedPoint = getCollision(octree.root, sys.particles[0].position);
@@ -137,7 +138,7 @@ void ofApp::update() {
 			ofVec3f selected = marsMesh.getVertex(closestVertex);
 			cout << "Collision detected at: " << selected << endl;
 			landed = true;
-			impulseForce.apply(60 * engine.velocity);
+			impulseForce.apply(60 * sys.particles[0].velocity);
 		}
 	}
 	camera->spacecraft = rover.getPosition();
@@ -161,7 +162,7 @@ void ofApp::draw() {
 
 	// draw engine output
 	//
-	engine.setPosition(sys.particles[0].position);
+	//engine.setPosition(sys.particles[0].position);
 	//engine.draw();
 
 	ofPushMatrix();
@@ -207,8 +208,8 @@ void ofApp::draw() {
 	ofNoFill();
 	ofSetColor(ofColor::red);
 	drawBox(boundingBox);
-	// drawBox(roverBox);
-
+    // drawBox(roverBox);
+    
 	// draw octree
 	if (bPointSelectedOctree) {
 		drawOctree(octree.root, true);
@@ -218,6 +219,7 @@ void ofApp::draw() {
 	}
 
 	//draw emission
+    ofFill();
 	thruster_emitter.draw();
 
 	//close camera
@@ -332,23 +334,22 @@ void ofApp::keyPressed(int key) {
 	case OF_KEY_DOWN:
 		if (!landed) {
 			thruster.add(ofVec3f(0, 0, 0.5)); // was 0, 0.5, 0
-			engine.setVelocity(ofVec3f(0, 0, -5)); // was 0, -5, 0
-			engine.addPosition(ofVec3f(0, 0, 5));
-			rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+			//engine.setVelocity(ofVec3f(0, 0, -5)); // was 0, -5, 0
+			//engine.addPosition(ofVec3f(0, 0, 5));
+			//rover.setPosition(sys.particles[0].position);
 			//engine.start();
 		}
 		break;
 	case ' ':
 		if (!landed) {
 			// playSound();
-			thruster_emitter.setPosition(sys.particles[0].position);
 			thruster_emitter.setVelocity(ofVec3f(0, -5, 0));
-			thruster_emitter.start();
+			if (!thruster_emitter.started) thruster_emitter.start();
 			thruster.add(ofVec3f(0, .5, 0));
-			engine.setVelocity(ofVec3f(0, -5, 0));
-			engine.addPosition(ofVec3f(0, 5, 0));
-			engine.start();
-			rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+			//engine.setVelocity(ofVec3f(0, -5, 0));
+			//engine.addPosition(ofVec3f(0, 5, 0));
+			//engine.start();
+			//rover.setPosition(sys.particles[0].position);
 		}
 
 		break;
@@ -356,9 +357,9 @@ void ofApp::keyPressed(int key) {
 		if (!landed) {
 			// playSound();
 			thruster.add(ofVec3f(0, 0, -0.5));
-			engine.setVelocity(ofVec3f(0, 0, 5));
-			engine.addPosition(ofVec3f(0, 0, -5));
-			rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+			//engine.setVelocity(ofVec3f(0, 0, 5));
+			//engine.addPosition(ofVec3f(0, 0, -5));
+			//rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
 			//engine.start();
 		}
 		break;
@@ -366,10 +367,10 @@ void ofApp::keyPressed(int key) {
 		if (!landed) {
 			//playSound();
 			thruster.add(ofVec3f(-.5, 0, 0));
-			engine.setVelocity(ofVec3f(5, 0, 0));
-			engine.addPosition(ofVec3f(-5, 0, 0));
-			engine.start();
-			rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+			//engine.setVelocity(ofVec3f(5, 0, 0));
+			//engine.addPosition(ofVec3f(-5, 0, 0));
+			//engine.start();
+			//rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
 		}
 
 		break;
@@ -377,10 +378,10 @@ void ofApp::keyPressed(int key) {
 		if (!landed) {
 			//  playSound();
 			thruster.add(ofVec3f(.5, 0, 0));
-			engine.setVelocity(ofVec3f(-5, 0, 0));
-			engine.addPosition(ofVec3f(5, 0, 0));
+			//engine.setVelocity(ofVec3f(-5, 0, 0));
+			//engine.addPosition(ofVec3f(5, 0, 0));
 			//engine.start();
-			rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+			//rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
 		}
 		break;
 	case 'H':
@@ -461,7 +462,7 @@ void ofApp::keyReleased(int key) {
 	case OF_KEY_UP:
 	case OF_KEY_DOWN:
 		// soundPlayer.stop();
-		engine.stop();
+		//engine.stop();
 		thruster.set(ofVec3f(0, 0, 0));
 		break;
 	case OF_KEY_ALT:

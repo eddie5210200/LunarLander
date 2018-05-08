@@ -6,8 +6,8 @@ public:
 	void camera_begin();
 	void camera_end();
 	//Cameras
-	ofEasyCam cam, far_view;
-	ofCamera front_view, down_view;
+	ofEasyCam cam, far_view, down_view;
+	ofCamera front_view;
 	ofVec3f spacecraft, far_position;
 	bool setTarget;
 	int camera_number; // 0-2 is normal camera, 3 is easycam
