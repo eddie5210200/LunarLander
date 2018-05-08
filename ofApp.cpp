@@ -1,6 +1,5 @@
 //--------------------------------------------------------------
 //
-//  Kevin M. Smith
 //
 //  Mars HiRise Project - startup scene
 //
@@ -91,8 +90,8 @@ void ofApp::setup() {
     sys.add(ship);
     
     sys.addForce(&thruster);
-    sys.addForce(&impulseForce);   //
-    sys.addForce(new TurbulenceForce(ofVec3f(-0.02, -0.01, -0.03), ofVec3f(0.01, 0.02, 0.05)));
+    sys.addForce(&impulseForce);
+    sys.addForce(new TurbulenceForce(ofVec3f(-0.2, -0.1, -0.3), ofVec3f(0.1, 0.2, 0.5)));
     sys.addForce(new GravityForce(ofVec3f(0, -gravity, 0)));
 }
 
@@ -177,7 +176,6 @@ void ofApp::draw() {
         ofSetColor(ofColor::blue);
         ofDrawSphere(selectedPoint, .1);
     }
-    
     
     ofNoFill();
     ofSetColor(ofColor::red);
@@ -294,13 +292,15 @@ void ofApp::keyPressed(int key) {
             }
             break;
         case ' ':
-            if (landed) landed = false;
-           // playSound();
-            thruster.add(ofVec3f(0, .5, 0));
-            engine.setVelocity(ofVec3f(0, -5, 0));
-            engine.addPosition(ofVec3f(0, 5, 0));
-            engine.start();
-            rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+            if (!landed) {
+                // playSound();
+                thruster.add(ofVec3f(0, .5, 0));
+                engine.setVelocity(ofVec3f(0, -5, 0));
+                engine.addPosition(ofVec3f(0, 5, 0));
+                engine.start();
+                rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+            }
+           
             break;
         case OF_KEY_UP:
             if (!landed) {
