@@ -14,7 +14,7 @@ Particle::Particle() {
 	radius = .1;
 	damping = .99;
 	mass = 1;
-	color = ofColor(255, 0, 0);
+	color = ofColor::red;
 }
 
 void Particle::draw() {
@@ -22,12 +22,11 @@ void Particle::draw() {
 	ofSetColor(color);
 	//red -> orange -> fade 
 	if (color.g < 165) {
-		color.g += 3;
+		color.g += 5;
 	}
-	else if((ofGetElapsedTimeMillis() - birthtime) / 1000.0 > lifespan * 3 / 4){
+	else if ((ofGetElapsedTimeMillis() - birthtime) / 1000.0 > lifespan * 3 / 4) {
 		color = ofColor(155, 155, 155);
 	}
-	//ofSetColor(ofMap(age(), 0, lifespan, 255, 10), 0, 0);
 	ofDrawSphere(position, radius);
 }
 
@@ -35,10 +34,14 @@ void Particle::draw() {
 //
 void Particle::integrate() {
 
-	
+	// check for 0 framerate to avoid divide errors
+	//
+	float framerate = ofGetFrameRate();
+	if (framerate < 1.0) return;
+
 	// interval for this step
 	//
-	float dt = 1.0 / ofGetFrameRate();
+	float dt = 1.0 / framerate;
 
 	// update position based on velocity
 	//

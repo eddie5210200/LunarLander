@@ -9,8 +9,9 @@
 class TransformObject {
 protected:
 	TransformObject();
-	ofVec2f position, scale;
+	ofVec3f position, scale;
 	float	rotation;
 	bool	bSelected;
+public:
 	void setPosition(const ofVec3f &);
 };

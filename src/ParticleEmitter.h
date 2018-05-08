@@ -1,9 +1,6 @@
 #pragma once
-//  Kevin M. Smith - CS 134 SJSU
-
-#include "Particle.h"
-#include "ParticleSystem.h"
 #include "TransformObject.h"
+#include "ParticleSystem.h"
 
 typedef enum { DirectionalEmitter, RadialEmitter, SphereEmitter, DiscEmitter } EmitterType;
 
@@ -19,33 +16,42 @@ public:
 	void draw();
 	void start();
 	void stop();
-	void setLifespan(const float life) { lifespan = life; }
-	void setMass(const float m) { mass = m; }
+    ofVec3f getPosition();
+    void addPosition(const ofVec3f);
+	void setLifespan(const float life)   { lifespan = life; }
+    void setPosition(const ofVec3f &pos) { position = pos ; }
 	void setVelocity(const ofVec3f &vel) { velocity = vel; }
 	void setRate(const float r) { rate = r; }
 	void setParticleRadius(const float r) { particleRadius = r; }
 	void setEmitterType(EmitterType t) { type = t; }
 	void setGroupSize(int s) { groupSize = s; }
-	void setColor(ofColor c) { color = c; }
 	void setOneShot(bool s) { oneShot = s; }
+	void setRandomLife(bool b) { randomLife = b;  }
+	void setLifespanRange(const ofVec2f &r) { lifeMinMax = r; }
+	void setMass(float m) { mass = m; }
+	void setColor(ofColor c) { particleColor = c; }
+	void setDamping(float d) { damping = d; }
 	void update();
 	void spawn(float time);
-	void setPosition(ofVec3f pos) { TransformObject::setPosition(pos); };
 	ParticleSystem *sys;
 	float rate;         // per sec
 	bool oneShot;
 	bool fired;
+	bool randomLife;
+	ofVec3f lifeMinMax;
 	ofVec3f velocity;
 	float lifespan;     // sec
+	float mass;
+	float damping;
 	bool started;
 	float lastSpawned;  // ms
 	float particleRadius;
-	float mass;
+	ofColor particleColor;
 	float radius;
 	float discradius;
 	bool visible;
 	int groupSize;      // number of particles to spawn in a group
-	ofColor color;
 	bool createdSys;
 	EmitterType type;
+
 };

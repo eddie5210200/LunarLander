@@ -1,3 +1,6 @@
+
+// Kevin M.Smith - CS 134 SJSU
+
 #include "ParticleSystem.h"
 
 void ParticleSystem::add(const Particle &p) {
@@ -21,11 +24,6 @@ void ParticleSystem::setLifespan(float l) {
 void ParticleSystem::reset() {
 	for (int i = 0; i < forces.size(); i++) {
 		forces[i]->applied = false;
-	}
-}
-void ParticleSystem::setColor(ofColor c){
-    	for (int i = 0; i < particles.size(); i++) {
-		particles[i].color = c;
 	}
 }
 
@@ -128,6 +126,22 @@ void ImpulseRadialForce::updateForce(Particle * particle) {
 	// we basically create a random direction for each particle
 	// the force is only added once after it is triggered.
 	//
-	ofVec3f dir = ofVec3f(ofRandom(-1, 1), ofRandom(-.1, .1), ofRandom(-1, 1));
+	ofVec3f dir = ofVec3f(ofRandom(-1, 1), ofRandom(-height/2.0, height/2.0), ofRandom(-1, 1));
 	particle->forces += dir.getNormalized() * magnitude;
+}
+
+CyclicForce::CyclicForce(float magnitude) {
+	this->magnitude = magnitude;
+}
+
+void CyclicForce::updateForce(Particle * particle) {
+
+	ofVec3f position = particle->position;
+	ofVec3f norm = position.getNormalized();
+	ofVec3f dir = norm.cross(ofVec3f(0, 1, 0));
+	particle->forces += dir.getNormalized() * magnitude;
+}
+
+void ThrusterForce::updateForce(Particle * particle) {
+	particle->forces += thrust;
 }

@@ -1,5 +1,4 @@
 
-//  Kevin M. Smith - CS 134 SJSU
 
 #include "ParticleEmitter.h"
 
@@ -28,9 +27,12 @@ ParticleEmitter::~ParticleEmitter() {
 }
 
 void ParticleEmitter::init() {
-	rate = 0;
+	rate = 1;
 	velocity = ofVec3f(0, 20, 0);
 	lifespan = 3;
+	mass = 1;
+	randomLife = false;
+	lifeMinMax = ofVec3f(2, 4);
 	started = false;
 	oneShot = false;
 	fired = false;
@@ -41,25 +43,35 @@ void ParticleEmitter::init() {
 	type = DirectionalEmitter;
 	groupSize = 1;
 	discradius = 2;
+	damping = .99;
+	particleColor = ofColor::red;
+	position = ofVec3f(0, 0, 0);
 }
 
+ofVec3f ParticleEmitter::getPosition() {
+	return this->position;
+}
 
+// I ADDED THIS HERE, NEED TO INTEGRATE THIS FUNCTION
+void ParticleEmitter::addPosition(const ofVec3f pos) {
+	this->position += pos;
+}
 
 void ParticleEmitter::draw() {
 	if (visible) {
 		switch (type) {
 		case DirectionalEmitter:
-			ofDrawSphere(position, radius/10);  // just draw a small sphere for point emitters 
+			ofDrawSphere(position, radius / 10);  // just draw a small sphere for point emitters 
 			break;
 		case SphereEmitter:
 		case RadialEmitter:
-			//ofDrawSphere(position, radius/10);  // just draw a small sphere as a placeholder
+			ofDrawSphere(position, radius / 10);  // just draw a small sphere as a placeholder
 			break;
 		default:
 			break;
 		}
 	}
-	sys->draw();  
+	sys->draw();
 }
 void ParticleEmitter::start() {
 	started = true;
@@ -76,6 +88,7 @@ void ParticleEmitter::update() {
 
 	if (oneShot && started) {
 		if (!fired) {
+
 			// spawn a new particle(s)
 			//
 			for (int i = 0; i < groupSize; i++)
@@ -91,9 +104,9 @@ void ParticleEmitter::update() {
 
 		// spawn a new particle(s)
 		//
-		for (int i= 0; i < groupSize; i++)
+		for (int i = 0; i < groupSize; i++)
 			spawn(time);
-	
+
 		lastSpawned = time;
 	}
 
@@ -125,21 +138,28 @@ void ParticleEmitter::spawn(float time) {
 		particle.position.set(position);
 		break;
 	case DiscEmitter:
+	{
 		particle.velocity = velocity;
 		int angle = ofRandom(0, 360);
 		ofVec3f pos = ofVec3f(position.x, position.y, 0);
 		ofVec3f mag = ofVec3f(sin(angle) * ofRandom(0, discradius), 0, cos(angle) * ofRandom(0, discradius));
 		particle.position.set(pos + mag);
+	}
 		break;
 	}
 
 	// other particle attributes
 	//
-	particle.lifespan = lifespan;
+	if (randomLife) {
+		particle.lifespan = ofRandom(lifeMinMax.x, lifeMinMax.y);
+	}
+	else particle.lifespan = lifespan;
 	particle.birthtime = time;
 	particle.radius = particleRadius;
-    particle.color = color;
 	particle.mass = mass;
+	particle.damping = damping;
+	particle.color = particleColor;
+
 	// add to system
 	//
 	sys->add(particle);

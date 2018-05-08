@@ -22,7 +22,6 @@ public:
 	void remove(int);
 	void update();
 	void setLifespan(float);
-    void setColor(ofColor);
 	void reset();
 	int removeNear(const ofVec3f & point, float dist);
 	void draw();
@@ -37,6 +36,7 @@ public:
 class GravityForce: public ParticleForce {
 	ofVec3f gravity;
 public:
+	void set(const ofVec3f &g) { gravity = g; }
 	GravityForce(const ofVec3f & gravity);
 	void updateForce(Particle *);
 };
@@ -44,13 +44,58 @@ public:
 class TurbulenceForce : public ParticleForce {
 	ofVec3f tmin, tmax;
 public:
+	void set(const ofVec3f &min, const ofVec3f &max) { tmin = min; tmax = max; }
 	TurbulenceForce(const ofVec3f & min, const ofVec3f &max);
+	TurbulenceForce() { tmin.set(0, 0, 0); tmax.set(0, 0, 0); }
 	void updateForce(Particle *);
 };
 
 class ImpulseRadialForce : public ParticleForce {
-	float magnitude;
+	float magnitude = 1.0;
+	float height = .2;
 public:
+	void set(float mag) { magnitude = mag; }
+	void setHeight(float h) { height = h; }
 	ImpulseRadialForce(float magnitude);
+	ImpulseRadialForce() {}
 	void updateForce(Particle *);
 };
+
+class CyclicForce : public ParticleForce {
+	float magnitude = 1.0;
+public:
+	void set(float mag) { magnitude = mag; }
+	CyclicForce(float magnitude);  
+	CyclicForce() {}
+	void updateForce(Particle *);
+};
+
+class ThrusterForce : public ParticleForce {
+	ofVec3f thrust = ofVec3f(0, 0, 0);
+public:
+	void set(ofVec3f t) { thrust = t; }
+	void add(ofVec3f t) { thrust += t;  }
+	ThrusterForce(ofVec3f t) { thrust = t; }
+	ThrusterForce() {}
+	void updateForce(Particle *);
+};
+
+class ImpulseForce : public ParticleForce {
+    ofVec3f force;
+public:
+    ImpulseForce() {
+        applyOnce = true;
+        applied = true;
+        force = ofVec3f(0, 0, 0);
+    }
+    void apply(const ofVec3f f) {
+        applied = false;
+        force = f;
+    }
+    void updateForce(Particle *particle) {
+        particle->forces += force;
+    }
+    
+};
+
+
