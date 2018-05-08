@@ -95,7 +95,7 @@ void ofApp::setup() {
 }
 
 //--------------------------------------------------------------
-// incrementally update scene (animation)
+// Updated the update method
 //
 void ofApp::update() {
     if (!landed) {
@@ -120,7 +120,6 @@ void ofApp::update() {
                 landed = true;
                 cout << "Collision detected at: " << selected << endl;
             }
-            
             impulseForce.apply(0 * sys.particles[0].velocity);
         }
     }
@@ -130,7 +129,7 @@ void ofApp::update() {
 void ofApp::draw() {
     //    ofBackgroundGradient(ofColor(20), ofColor(0));   // pick your own backgroujnd
     ofBackground(ofColor::black);
-    //    cout << ofGetFrameRate() << endl;
+       // cout << ofGetFrameRate() << endl;
     
     ofEnableDepthTest();
     cam.begin();
@@ -432,11 +431,9 @@ void ofApp::keyReleased(int key) {
 void ofApp::mouseMoved(int x, int y){
 }
 
+// added agl method, need to display on top right
 float ofApp::displayAGL() {
-    // get sys particle 0 pos
-    // create a ray pointing down from that position 0,1,0
-    // find where this ray intersects the mesh below it and display the length of the ray until collision
-    
+
     float result = 0;
     ofVec3f selected = ofVec3f(0,0,0);
     
