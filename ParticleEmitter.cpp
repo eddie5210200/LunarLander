@@ -1,5 +1,4 @@
 
-//  Kevin M. Smith - CS 134 SJSU
 
 #include "ParticleEmitter.h"
 
@@ -48,6 +47,14 @@ void ParticleEmitter::init() {
 	position = ofVec3f(0, 0, 0);
 }
 
+ofVec3f ParticleEmitter::getPosition() {
+    return this->position;
+}
+
+// I ADDED THIS HERE, NEED TO INTEGRATE THIS FUNCTION
+void ParticleEmitter::addPosition(const ofVec3f pos) {
+    this->position += pos;
+}
 
 void ParticleEmitter::draw() {
 	if (visible) {
