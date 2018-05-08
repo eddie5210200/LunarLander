@@ -1,6 +1,4 @@
 #pragma once
-//  Kevin M. Smith - CS 134 SJSU
-
 #include "TransformObject.h"
 #include "ParticleSystem.h"
 
@@ -18,6 +16,8 @@ public:
 	void draw();
 	void start();
 	void stop();
+    ofVec3f getPosition();
+    void addPosition(const ofVec3f);
 	void setLifespan(const float life)   { lifespan = life; }
     void setPosition(const ofVec3f &pos) { position = pos ; }
 	void setVelocity(const ofVec3f &vel) { velocity = vel; }
