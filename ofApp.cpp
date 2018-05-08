@@ -1,6 +1,5 @@
 //--------------------------------------------------------------
 //
-//
 //  Mars HiRise Project - startup scene
 //
 //  This is an openFrameworks 3D scene that includes an EasyCam
@@ -11,7 +10,7 @@
 //  Have Fun !!
 //
 // Author: Marcus Lau
-// Date: 5/7/18
+// Date: 5/8/18
 
 #include "ofApp.h"
 #include "Util.h"
@@ -103,7 +102,8 @@ void ofApp::update() {
         sys.update();
         engine.update();
         engine.setPosition(sys.particles[0].position);
-        rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+        rover.setPosition(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z);
+        cout << displayAGL() << endl;
         // check if rover point intersects with terrain mesh
         // if list is not empty, print out first point collided
         vector<int> selectedPoint = getCollision(octree.root, sys.particles[0].position);
@@ -112,9 +112,16 @@ void ofApp::update() {
             // Find the closest vertex
             int closestVertex = selectedPoint[0];
             ofVec3f selected = marsMesh.getVertex(closestVertex);
-            cout << "Collision detected at: " << selected << endl;
-            landed =true;
-            impulseForce.apply(60 * engine.velocity);
+            //cout << "Collision detected at: " << selected << endl;
+            if (sys.particles[0].position.y > 20) { // rover is too high
+                landed = false;
+            }
+            else {
+                landed = true;
+                cout << "Collision detected at: " << selected << endl;
+            }
+            
+            impulseForce.apply(0 * sys.particles[0].velocity);
         }
     }
 }
@@ -144,8 +151,8 @@ void ofApp::draw() {
         mars.drawWireframe();
         if (bRoverLoaded) {
             rover.drawWireframe();
-           // ofSetColor(ofColor::green);
-           // ofDrawSphere(center, 0.05);
+//            ofSetColor(ofColor::green);
+//            ofDrawSphere(center, 0.05);
             if (!bTerrainSelected) drawAxis(rover.getPosition());
         }
         if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
@@ -156,9 +163,9 @@ void ofApp::draw() {
         
         if (bRoverLoaded) {
             rover.drawFaces();
-            // ofSetColor(ofColor::blue);
-            // ofDrawSphere(center, 0.1);
-            // ofDrawSphere(bottom, 0.05);
+//             ofSetColor(ofColor::blue);
+//             //ofDrawSphere(center, 0.1);
+//             ofDrawSphere(bottom, 0.05);
             if (!bTerrainSelected) drawAxis(rover.getPosition());
         }
         if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
@@ -178,9 +185,9 @@ void ofApp::draw() {
     }
     
     ofNoFill();
-    ofSetColor(ofColor::red);
-    drawBox(boundingBox);
-    // drawBox(roverBox);
+    //ofSetColor(ofColor::red);
+    //drawBox(boundingBox);
+   // drawBox(roverBox);
     
     // draw octree
     if (bPointSelectedOctree) {
@@ -298,7 +305,7 @@ void ofApp::keyPressed(int key) {
                 engine.setVelocity(ofVec3f(0, -5, 0));
                 engine.addPosition(ofVec3f(0, 5, 0));
                 engine.start();
-                rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+               // rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
             }
            
             break;
@@ -425,6 +432,31 @@ void ofApp::keyReleased(int key) {
 void ofApp::mouseMoved(int x, int y){
 }
 
+float ofApp::displayAGL() {
+    // get sys particle 0 pos
+    // create a ray pointing down from that position 0,1,0
+    // find where this ray intersects the mesh below it and display the length of the ray until collision
+    
+    float result = 0;
+    ofVec3f selected = ofVec3f(0,0,0);
+    
+    Ray ray = Ray(Vector3(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z),
+                  Vector3(0, -1, 0));
+    vector<int> selectedVertices = getIntersectingVertices(octree.root, ray);
+    
+    if (selectedVertices.size() != 0) {
+        // Find the closest vertex
+        int closestVertex = selectedVertices[0];
+        for (int i : selectedVertices) {
+            if (marsMesh.getVertex(i).y > marsMesh.getVertex(closestVertex).y && marsMesh.getVertex(i).y < 20)
+                closestVertex = i;
+        }
+        selected = marsMesh.getVertex(closestVertex);
+    }
+    
+    result = sys.particles[0].position.y - selected.y;
+    return result;
+}
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button) {
@@ -493,7 +525,7 @@ vector<int> ofApp::getIntersectingVertices(Box &box, const Ray &ray) {
 
 // Checks if rover point intersects with bounding box
 // return a list of points that the rover point collides with
-vector<int> ofApp::getCollision(Box &box, const ofPoint &point) {
+vector<int> ofApp::getCollision(Box &box, const ofVec3f &point) {
     if (box.contains(point)) {
         // if only one vertex in leaf, we've found the lowest depth
         if (box.vertexIndices.size() == 1) return { box.vertexIndices[0] };
