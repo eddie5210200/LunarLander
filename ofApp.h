@@ -39,7 +39,9 @@ public:
     void setCameraTarget();
     bool doPointSelection();
     vector<int> getIntersectingVertices(Box &box, const Ray &ray);
+    vector<int> getCollision(Box &box, const ofVec3f &point);
     void drawBox(const Box &box);
+    ofVec3f getCenter(const ofMesh &);
     Box meshBounds(const ofMesh &);
     void subDivideBox8(const Box &b, vector<Box> &boxList);
     void generateTree(const Box &boundingBox, const ofMesh &mesh, int maxDepth, Octree &octree);
@@ -47,11 +49,14 @@ public:
     
     bool mouseIntersectPlane(ofVec3f planePoint, ofVec3f planeNorm, ofVec3f &point);
     
+    ofVec3f center, bottom;
+    float roverX,roverY,roverZ;
     ofEasyCam cam;
     ofxAssimpModelLoader mars, rover;
     ofMesh marsMesh;
+    ofMesh roverMesh;
     ofLight light;
-    Box boundingBox;
+    Box boundingBox, roverBox;
     Octree octree;
     int octreeHighestDepth; // contains the highest depth of leaves, updated within generateTree()
     
@@ -66,6 +71,7 @@ public:
     
     bool bRoverLoaded;
     bool bTerrainSelected;
+    bool landed;
     
     ofVec3f selectedPoint;
     ofVec3f intersectPoint;
@@ -81,6 +87,8 @@ public:
     ThrusterForce thruster;
     ParticleEmitter engine;
     Particle ship;
+    
+    ImpulseForce impulseForce;  // create the impulse force
     
     ofSoundPlayer soundPlayer;
     bool soundFileLoaded = false;
