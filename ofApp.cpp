@@ -8,28 +8,21 @@
 //  and example 3D geometry which I have reconstructed from Mars
 //  HiRis photographs taken the Mars Reconnaisance Orbiter
 //
-//  You will use this source file (and include file) as a starting point
-//  to implement assignment 5  (Parts I and II)
-//
-//  Please do not modify any of the keymappings.  I would like
-//  the input interface to be the same for each student's
-//  work.  Please also add your name/date below.
-
 //  Please document/comment all of your work !
 //  Have Fun !!
 //
+// Author: Marcus Lau
+// Date: 5/7/18
 
 #include "ofApp.h"
 #include "Util.h"
-
 #include <vector>
 #include <map>
 
 //--------------------------------------------------------------
 // setup scene, lighting, state and load geometry
 //
-void ofApp::setup(){
-    
+void ofApp::setup() {
     bShaded = true;
     bWireframe = false;
     bDisplayPoints = false;
@@ -39,6 +32,7 @@ void ofApp::setup(){
     bTerrainSelected = true;
     bHide = false;
     bPointSelectedOctree = false;
+    landed = false; // Landing flag default set to false
     //    ofSetWindowShape(1024, 768);
     
     cam.setDistance(10);
@@ -52,19 +46,37 @@ void ofApp::setup(){
     //
     initLightingAndMaterials();
     
-    mars.loadModel("geo/mars-low-v2.obj");
+    mars.loadModel("geo/marssurface.obj");
     mars.setScaleNormalization(false);
     marsMesh = mars.getMesh(0);
     
+    rover.loadModel("geo/lander.obj");
+    rover.setScaleNormalization(false);
+    roverMesh = rover.getMesh(0);
+    bRoverLoaded = true;
+    
+    roverBox = meshBounds(roverMesh);
     boundingBox = meshBounds(marsMesh);
+    
+    // compute and calculate center vector
+    roverX = (roverBox.max().x() + roverBox.min().x()) / 2;
+    roverY = (roverBox.max().y() + roverBox.min().y()) / 2;
+    roverZ = (roverBox.max().z() + roverBox.min().z()) / 2;
+    center = ofVec3f(roverX,roverY,roverZ);
+    // cout << "Center point is: " << center << endl;
+    rover.setPosition(roverX, roverY, roverZ);
+    
+    // compute emitter location based on rover bounding box
+    bottom = ofVec3f(roverX, roverBox.min().y(), roverZ);
+    // cout << "Bottom point is: " << bottom << endl;
     
     // generate octree
     octreeHighestDepth = 0;
     generateTree(boundingBox, marsMesh, octreeMaxDepth, octree);
     
     gui.setup();
-    gui.add(sliderOctreeDepth.setup("Octree display depth", 0, 0, octreeHighestDepth));
-    gui.add(gravity.setup("Gravity", 0.1, 0, 2));
+    gui.add(sliderOctreeDepth.setup("Octree depth", 0, 0, octreeHighestDepth));
+    gui.add(gravity.setup("Gravity", 0.1, 0, 2)); // Need to connect gui slider to actual slider and update in-app
     
     //  setup emitter (for engine)
     //
@@ -72,14 +84,15 @@ void ofApp::setup(){
     engine.setParticleRadius(.050);
     engine.visible = false;
     
-    // create our one lonely particle
-    //
+    // "Ship" is the particle that the lander is mapped to
+    ship.color = ofColor::green;
     ship.lifespan = 10000;
-    ship.position.set(0, 2.5, 0);
+    ship.position.set(roverX, roverY, roverZ);
     sys.add(ship);
     
     sys.addForce(&thruster);
-    //sys.addForce(new TurbulenceForce(ofVec3f(-0.02, -0.01, -0.03), ofVec3f(0.01, 0.02, 0.05)));
+    sys.addForce(&impulseForce);   //
+    sys.addForce(new TurbulenceForce(ofVec3f(-0.02, -0.01, -0.03), ofVec3f(0.01, 0.02, 0.05)));
     sys.addForce(new GravityForce(ofVec3f(0, -gravity, 0)));
 }
 
@@ -87,10 +100,24 @@ void ofApp::setup(){
 // incrementally update scene (animation)
 //
 void ofApp::update() {
-    
-    sys.update();
-    engine.update();
-    engine.setPosition(sys.particles[0].position); // this updates the thruster position to "ship" which is the 1st particle
+    if (!landed) {
+        sys.update();
+        engine.update();
+        engine.setPosition(sys.particles[0].position);
+        rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+        // check if rover point intersects with terrain mesh
+        // if list is not empty, print out first point collided
+        vector<int> selectedPoint = getCollision(octree.root, sys.particles[0].position);
+        // If list of collisions is not empty
+        if (selectedPoint.size() != 0) {
+            // Find the closest vertex
+            int closestVertex = selectedPoint[0];
+            ofVec3f selected = marsMesh.getVertex(closestVertex);
+            cout << "Collision detected at: " << selected << endl;
+            landed =true;
+            impulseForce.apply(60 * engine.velocity);
+        }
+    }
 }
 
 //--------------------------------------------------------------
@@ -118,6 +145,8 @@ void ofApp::draw() {
         mars.drawWireframe();
         if (bRoverLoaded) {
             rover.drawWireframe();
+           // ofSetColor(ofColor::green);
+           // ofDrawSphere(center, 0.05);
             if (!bTerrainSelected) drawAxis(rover.getPosition());
         }
         if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
@@ -128,11 +157,13 @@ void ofApp::draw() {
         
         if (bRoverLoaded) {
             rover.drawFaces();
+            // ofSetColor(ofColor::blue);
+            // ofDrawSphere(center, 0.1);
+            // ofDrawSphere(bottom, 0.05);
             if (!bTerrainSelected) drawAxis(rover.getPosition());
         }
         if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
     }
-    
     
     if (bDisplayPoints) {                // display points as an option
         glPointSize(3);
@@ -149,8 +180,9 @@ void ofApp::draw() {
     
     
     ofNoFill();
-    ofSetColor(ofColor::white);
+    ofSetColor(ofColor::red);
     drawBox(boundingBox);
+    // drawBox(roverBox);
     
     // draw octree
     if (bPointSelectedOctree) {
@@ -167,8 +199,6 @@ void ofApp::draw() {
         gui.draw();
     }
 }
-
-//
 
 // Draw an XYZ axis in RGB at world (0,0,0) for reference.
 //
@@ -251,39 +281,57 @@ void ofApp::keyPressed(int key) {
         case 'f':
             ofToggleFullscreen();
             break;
-            
         // have LEFT/RIGHT move in the X coordinate plane
         // have UP/DOWN move in the Z coordinate plane
         // have SPACEBAR be the only way to thruster up
         case OF_KEY_DOWN:
-            thruster.add(ofVec3f(0, 0, 0.5)); // was 0, 0.5, 0
-            engine.setVelocity(ofVec3f(0, 0, -5)); // was 0, -5, 0
-            engine.start();
+            if (!landed) {
+                thruster.add(ofVec3f(0, 0, 0.5)); // was 0, 0.5, 0
+                engine.setVelocity(ofVec3f(0, 0, -5)); // was 0, -5, 0
+                engine.addPosition(ofVec3f(0, 0, 5));
+                rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+                //engine.start();
+            }
             break;
-        case ' ': // to move the ship upwards
+        case ' ':
+            if (landed) landed = false;
            // playSound();
             thruster.add(ofVec3f(0, .5, 0));
             engine.setVelocity(ofVec3f(0, -5, 0));
+            engine.addPosition(ofVec3f(0, 5, 0));
             engine.start();
+            rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
             break;
         case OF_KEY_UP:
-           // playSound();
-            thruster.add(ofVec3f(0, 0, -0.5)); // was 0, -0.5, 0
-            engine.setVelocity(ofVec3f(0, 0, 5)); // was 0, 5, 0
-            engine.start();
+            if (!landed) {
+                // playSound();
+                thruster.add(ofVec3f(0, 0, -0.5));
+                engine.setVelocity(ofVec3f(0, 0, 5));
+                engine.addPosition(ofVec3f(0, 0, -5));
+                rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+                //engine.start();
+            }
             break;
-            
         case OF_KEY_LEFT:
-            //playSound();
-            thruster.add(ofVec3f(-.5, 0, 0));
-            engine.setVelocity(ofVec3f(5, 0, 0));
-            engine.start();
+            if (!landed) {
+                //playSound();
+                thruster.add(ofVec3f(-.5, 0, 0));
+                engine.setVelocity(ofVec3f(5, 0, 0));
+                engine.addPosition(ofVec3f(-5, 0, 0));
+                //engine.start();
+                rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+            }
+            
             break;
         case OF_KEY_RIGHT:
-          //  playSound();
-            thruster.add(ofVec3f(.5, 0, 0));
-            engine.setVelocity(ofVec3f(-5, 0, 0));
-            engine.start();
+            if (!landed) {
+                //  playSound();
+                thruster.add(ofVec3f(.5, 0, 0));
+                engine.setVelocity(ofVec3f(-5, 0, 0));
+                engine.addPosition(ofVec3f(5, 0, 0));
+                //engine.start();
+                rover.setPosition(engine.getPosition().x, engine.getPosition().y, engine.getPosition().z);
+            }
             break;
         case 'H':
         case 'h':
@@ -373,8 +421,6 @@ void ofApp::keyReleased(int key) {
     }
 }
 
-
-
 //--------------------------------------------------------------
 void ofApp::mouseMoved(int x, int y){
 }
@@ -389,6 +435,8 @@ void ofApp::mousePressed(int x, int y, int button) {
     ofVec3f rayPoint = cam.screenToWorld(mouse);
     ofVec3f rayDir = rayPoint - cam.getPosition();
     rayDir.normalize();
+    // first parameter is "bottom"
+    // down y-axis
     Ray ray = Ray(Vector3(rayPoint.x, rayPoint.y, rayPoint.z),
                   Vector3(rayDir.x, rayDir.y, rayDir.z));
     
@@ -438,6 +486,30 @@ vector<int> ofApp::getIntersectingVertices(Box &box, const Ray &ray) {
 
         return selectedVertices;
     } else {
+        box.containsSelectedVertex = false;
+        return { };
+    }
+}
+
+// Checks if rover point intersects with bounding box
+// return a list of points that the rover point collides with
+vector<int> ofApp::getCollision(Box &box, const ofPoint &point) {
+    if (box.contains(point)) {
+        // if only one vertex in leaf, we've found the lowest depth
+        if (box.vertexIndices.size() == 1) return { box.vertexIndices[0] };
+        // accumulate growing vector of intersected vertices
+        vector<int> selectedVertices;
+        for (Box &child : box.children) {
+            vector<int> vertices = getCollision(child, point);
+            for (int vertex : vertices){
+                selectedVertices.push_back(vertex);
+            }
+        }
+        if (selectedVertices.size() == 0) return { };
+        box.containsSelectedVertex = true;
+        return selectedVertices;
+    }
+    else {
         box.containsSelectedVertex = false;
         return { };
     }
