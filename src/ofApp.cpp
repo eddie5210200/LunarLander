@@ -41,6 +41,13 @@ void ofApp::setup() {
 	cam.setFov(65.5);   // approx equivalent to 28mm in 35mm format
 	cam.disableMouseInput();
 	*/
+
+#ifdef TARGET_OPENGLES
+	shader.load("shaders_gles/shader");
+#else
+	shader.load("shaders/shader");
+#endif
+
 	ofSetVerticalSync(true);
 	ofEnableSmoothing();
 
@@ -89,17 +96,16 @@ void ofApp::setup() {
 	//engine.setRate(20);
 	//engine.setParticleRadius(.050);
 	//engine.visible = false;
-	
+
 
 	// setup thruster emission effect
-	//thruster_emitter.sys->addForce(new GravityForce(ofVec3f(0, -2*gravity, 0)));
 	thruster_emitter.setVelocity(ofVec3f(0, -5, 0));
-	thruster_emitter.setGroupSize(50);
+	thruster_emitter.setGroupSize(400);
 	thruster_emitter.setEmitterType(DiscEmitter);
 	thruster_emitter.setColor(ofColor(255, 0, 0));
 	thruster_emitter.setPosition(ofVec3f(0, 10, 0));
 	thruster_emitter.setLifespan(0.5);
-	thruster_emitter.setRate(1000.0);
+	thruster_emitter.setRate(100000.0);
 	thruster_emitter.setParticleRadius(.1);
 	thruster_emitter.setMass(10);
 	thruster_emitter.discradius = 0.4;
@@ -117,6 +123,26 @@ void ofApp::setup() {
 	sys.addForce(new GravityForce(ofVec3f(0, -gravity, 0)));
 }
 
+// load vertex buffer in preparation for rendering
+//
+void ofApp::loadVbo() {
+	if (thruster_emitter.sys->particles.size() < 1) return;
+
+	vector<ofVec3f> sizes;
+	vector<ofVec3f> points;
+	for (int i = 0; i < thruster_emitter.sys->particles.size(); i++) {
+		points.push_back(thruster_emitter.sys->particles[i].position);
+		sizes.push_back(ofVec3f(.1, .1, .1));
+	}
+	// upload the data to the vbo
+	//
+	int total = (int)points.size();
+	vbo.clear();
+	vbo.setVertexData(&points[0], total, GL_STATIC_DRAW);
+	vbo.setNormalData(&sizes[0], total, GL_STATIC_DRAW);
+}
+
+
 //--------------------------------------------------------------
 // incrementally update scene (animation)
 //
@@ -124,14 +150,14 @@ void ofApp::update() {
 	if (!landed) {
 		//engine.update();
 		//engine.setPosition(sys.particles[0].position);
-        GravityForce *grav = (GravityForce*)sys.forces.at(2);
-        grav->set(ofVec3f(0, -gravity, 0));
-        sys.update();
-        
+		GravityForce *grav = (GravityForce*)sys.forces.at(2);
+		grav->set(ofVec3f(0, -gravity, 0));
+		sys.update();
+
 		thruster_emitter.update();
-        thruster_emitter.setPosition(sys.particles[0].position + ofVec3f(0, 0.5, 0));
-        
-        rover.setPosition(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z);
+		thruster_emitter.setPosition(sys.particles[0].position + ofVec3f(0, 0.5, 0));
+
+		rover.setPosition(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z);
 		// check if rover point intersects with terrain mesh
 		// if list is not empty, print out first point collided
 		vector<int> selectedPoint = getCollision(octree.root, sys.particles[0].position);
@@ -140,14 +166,14 @@ void ofApp::update() {
 			// Find the closest vertex
 			int closestVertex = selectedPoint[0];
 			ofVec3f selected = marsMesh.getVertex(closestVertex);
-            if (sys.particles[0].position.y > 20) { // rover is too high
-                landed = false;
-            }
-            else {
-                landed = true;
-                cout << "Collision detected at: " << selected << endl;
-            }
-            sys.particles[0].forces = ofVec3f(0, 0, 0);
+			if (sys.particles[0].position.y > 20) { // rover is too high
+				landed = false;
+			}
+			else {
+				landed = true;
+				cout << "Collision detected at: " << selected << endl;
+			}
+			sys.particles[0].forces = ofVec3f(0, 0, 0);
 		}
 	}
 	camera->spacecraft = rover.getPosition();
@@ -158,9 +184,9 @@ void ofApp::draw() {
 	//    ofBackgroundGradient(ofColor(20), ofColor(0));   // pick your own backgroujnd
 	ofBackground(ofColor::black);
 	//    cout << ofGetFrameRate() << endl;
-    
-	ofEnableDepthTest();
 
+	ofEnableDepthTest();
+	loadVbo();
 	//start camera
 	camera->camera_begin();
 	//cam.begin();
@@ -197,10 +223,24 @@ void ofApp::draw() {
 			// ofDrawSphere(center, 0.1);
 			// ofDrawSphere(bottom, 0.05);
 			//if (!bTerrainSelected); drawAxis(rover.getPosition());
-            
-            //draw emission
-            ofFill();
-            thruster_emitter.draw();
+
+			// this makes everything look glowy :)
+			//
+			ofEnableBlendMode(OF_BLENDMODE_ADD);
+			ofEnablePointSprites();
+			//draw emission
+			shader.begin();
+			shader.setUniform3f("reference", sys.particles[0].position);
+			ofFill();
+			particleTex.bind();
+			vbo.draw(GL_POINTS, 0, (int)thruster_emitter.sys->particles.size());
+			particleTex.unbind();
+			//thruster_emitter.draw();
+			shader.end();
+
+			ofDisablePointSprites();
+			ofDisableBlendMode();
+			ofEnableAlphaBlending();
 		}
 		if (bTerrainSelected);// drawAxis(ofVec3f(0, 0, 0));
 	}
@@ -221,8 +261,8 @@ void ofApp::draw() {
 	ofNoFill();
 	//ofSetColor(ofColor::red);
 	//drawBox(boundingBox);
-    // drawBox(roverBox);
-    
+	// drawBox(roverBox);
+
 	// draw octree
 	if (bPointSelectedOctree) {
 		drawOctree(octree.root, true);
@@ -239,12 +279,12 @@ void ofApp::draw() {
 	if (!bHide) {
 		gui.draw();
 	}
-    
-    string AGL;
-    AGL += "AGL: " + std::to_string(displayAGL());
-    ofFill();
-    ofSetColor(255, 255, 255, 255);
-    ofDrawBitmapString(AGL, 10, 85);
+
+	string AGL;
+	AGL += "AGL: " + std::to_string(displayAGL());
+	ofFill();
+	ofSetColor(255, 255, 255, 255);
+	ofDrawBitmapString(AGL, 10, 85);
 }
 
 // Draw an XYZ axis in RGB at world (0,0,0) for reference.
@@ -500,32 +540,32 @@ void ofApp::mouseMoved(int x, int y) {
 
 // added agl method, need to display on top right
 float ofApp::displayAGL() {
-    float result = 0;
-    ofVec3f selected = ofVec3f(0,0,0);
-    
-    Ray ray = Ray(Vector3(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z),
-                  Vector3(0, -1, 0));
-    vector<int> selectedVertices = getIntersectingVertices(octree.root, ray);
-    
-    if (selectedVertices.size() != 0) {
-        // Find the closest vertex
-        int closestVertex = selectedVertices[0];
-        for (int i : selectedVertices) {
-            if (marsMesh.getVertex(i).y > marsMesh.getVertex(closestVertex).y
-                && marsMesh.getVertex(closestVertex).y > 20)
-                closestVertex = i;
-            
-        }
-        selected = marsMesh.getVertex(closestVertex);
-    }
-    
-    result = sys.particles[0].position.y - selected.y;
-    return result;
+	float result = 0;
+	ofVec3f selected = ofVec3f(0, 0, 0);
+
+	Ray ray = Ray(Vector3(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z),
+		Vector3(0, -1, 0));
+	vector<int> selectedVertices = getIntersectingVertices(octree.root, ray);
+
+	if (selectedVertices.size() != 0) {
+		// Find the closest vertex
+		int closestVertex = selectedVertices[0];
+		for (int i : selectedVertices) {
+			if (marsMesh.getVertex(i).y > marsMesh.getVertex(closestVertex).y
+				&& marsMesh.getVertex(closestVertex).y > 20)
+				closestVertex = i;
+
+		}
+		selected = marsMesh.getVertex(closestVertex);
+	}
+
+	result = sys.particles[0].position.y - selected.y;
+	return result;
 }
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button) {
-    
+
 }
 
 // Checks which vetices intersect with ray; returns vertex indices of intersection,

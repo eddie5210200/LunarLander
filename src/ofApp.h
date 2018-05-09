@@ -39,6 +39,7 @@ public:
     void togglePointSelectedOctree();
     void setCameraTarget();
     bool doPointSelection();
+	void loadVbo();
     vector<int> getIntersectingVertices(Box &box, const Ray &ray);
     vector<int> getCollision(Box &box, const ofVec3f &point);
     void drawBox(const Box &box);
@@ -101,5 +102,14 @@ public:
     
     ofSoundPlayer soundPlayer;
     bool soundFileLoaded = false;
+
+	// textures
+	//
+	ofTexture  particleTex;
+
+	// shaders
+	//
+	ofVbo vbo;
+	ofShader shader;
 };
 
