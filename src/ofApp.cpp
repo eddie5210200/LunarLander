@@ -41,6 +41,13 @@ void ofApp::setup() {
 	cam.setFov(65.5);   // approx equivalent to 28mm in 35mm format
 	cam.disableMouseInput();
 	*/
+	// texture loading
+	//
+	ofDisableArbTex();     // disable rectangular textures
+	if (!ofLoadImage(particleTex, "images/dot.png")) {
+		cout << "Particle Texture File: images/dot.png not found" << endl;
+		ofExit();
+	}
 
 #ifdef TARGET_OPENGLES
 	shader.load("shaders_gles/shader");
@@ -132,7 +139,7 @@ void ofApp::loadVbo() {
 	vector<ofVec3f> points;
 	for (int i = 0; i < thruster_emitter.sys->particles.size(); i++) {
 		points.push_back(thruster_emitter.sys->particles[i].position);
-		sizes.push_back(ofVec3f(.1, .1, .1));
+		sizes.push_back(ofVec3f(5));
 	}
 	// upload the data to the vbo
 	//
@@ -187,6 +194,7 @@ void ofApp::draw() {
 
 	ofEnableDepthTest();
 	loadVbo();
+
 	//start camera
 	camera->camera_begin();
 	//cam.begin();
@@ -228,12 +236,12 @@ void ofApp::draw() {
 			//
 			ofEnableBlendMode(OF_BLENDMODE_ADD);
 			ofEnablePointSprites();
+			glDepthMask(GL_FALSE);
 			//draw emission
 			shader.begin();
-			shader.setUniform3f("reference", sys.particles[0].position);
-			ofFill();
+			//ofFill();
 			particleTex.bind();
-			vbo.draw(GL_POINTS, 0, (int)thruster_emitter.sys->particles.size());
+			vbo.draw(GL_POINTS, 0, (int) thruster_emitter.sys->particles.size());
 			particleTex.unbind();
 			//thruster_emitter.draw();
 			shader.end();
@@ -241,6 +249,7 @@ void ofApp::draw() {
 			ofDisablePointSprites();
 			ofDisableBlendMode();
 			ofEnableAlphaBlending();
+			glDepthMask(GL_TRUE);
 		}
 		if (bTerrainSelected);// drawAxis(ofVec3f(0, 0, 0));
 	}

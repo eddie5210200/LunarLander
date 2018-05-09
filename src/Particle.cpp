@@ -32,7 +32,7 @@ void Particle::draw() {
     
     color.setHsb(newHue, newSaturation, newBrightness, newAlpha);
 	*/
-    ofSetColor(color);
+	ofSetColor(ofMap(age(), 0, lifespan * 10, 255, 10), 0, 0);
 	
 	ofDrawSphere(position, radius);
 }
