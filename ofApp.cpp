@@ -103,7 +103,7 @@ void ofApp::update() {
         engine.update();
         engine.setPosition(sys.particles[0].position);
         rover.setPosition(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z);
-        cout << displayAGL() << endl;
+        //cout << displayAGL() << endl;
         // check if rover point intersects with terrain mesh
         // if list is not empty, print out first point collided
         vector<int> selectedPoint = getCollision(octree.root, sys.particles[0].position);
@@ -130,6 +130,10 @@ void ofApp::draw() {
     //    ofBackgroundGradient(ofColor(20), ofColor(0));   // pick your own backgroujnd
     ofBackground(ofColor::black);
        // cout << ofGetFrameRate() << endl;
+    ofSetColor(ofColor::white);
+    string AGL;
+    AGL += "AGL: " + std::to_string(displayAGL());
+    ofDrawBitmapString(AGL, 10, 85);
     
     ofEnableDepthTest();
     cam.begin();
@@ -142,6 +146,8 @@ void ofApp::draw() {
     //
     engine.setPosition(sys.particles[0].position);
     engine.draw();
+    
+
     
     ofPushMatrix();
     if (bWireframe) {                    // wireframe mode  (include axis)
@@ -433,7 +439,6 @@ void ofApp::mouseMoved(int x, int y){
 
 // added agl method, need to display on top right
 float ofApp::displayAGL() {
-
     float result = 0;
     ofVec3f selected = ofVec3f(0,0,0);
     
@@ -445,8 +450,10 @@ float ofApp::displayAGL() {
         // Find the closest vertex
         int closestVertex = selectedVertices[0];
         for (int i : selectedVertices) {
-            if (marsMesh.getVertex(i).y > marsMesh.getVertex(closestVertex).y && marsMesh.getVertex(i).y < 20)
+            if (marsMesh.getVertex(i).y > marsMesh.getVertex(closestVertex).y
+                && marsMesh.getVertex(closestVertex).y > 20)
                 closestVertex = i;
+            
         }
         selected = marsMesh.getVertex(closestVertex);
     }
