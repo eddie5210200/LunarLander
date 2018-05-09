@@ -1,9 +1,11 @@
 #pragma once
 
-#include "Camera.h"
-#include "ParticleEmitter.h"
-#include "ofxAssimpModelLoader.h"
+#include "ofMain.h"
 #include "ofxGui.h"
+#include "Particle.h"
+#include "ParticleEmitter.h"
+
+
 
 class ofApp : public ofBaseApp{
 
@@ -23,27 +25,47 @@ class ofApp : public ofBaseApp{
 		void windowResized(int w, int h);
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
+		void loadVbo();
 
-		//Asset
-		ofxAssimpModelLoader terrain;
-		ofxAssimpModelLoader spacecraft;
+		ofEasyCam    cam;
 
-		//Camera
-		Camera cam;
+	
+	    // Emitter and some forces;
+		//
+		ParticleEmitter emitter;
 
-		//Lighting
-		ofLight keyLight, fillLight, rimLight;
+		TurbulenceForce *turbForce;
+		GravityForce *gravityForce;
+		ImpulseRadialForce *radialForce;
+		CyclicForce *cyclicForce;
 
-		//Gui and list of gui controllers
+
+		// some simple sliders to play with parameters
+		//
+		bool bHide;
+		ofxFloatSlider gravity;
+		ofxFloatSlider damping;
+		ofxFloatSlider radius;
+		ofxVec3Slider velocity;
+		ofxIntSlider numParticles;
+		ofxFloatSlider lifespan;
+		ofxVec2Slider lifespanRange;
+		ofxVec3Slider turbMin;
+		ofxVec3Slider turbMax;
+		ofxFloatSlider mass;
+		ofxFloatSlider radialForceVal;
+		ofxFloatSlider radialHight;
+		ofxFloatSlider cyclicForceVal;
+		ofxFloatSlider rate;
 		ofxPanel gui;
-		ofxFloatSlider gravity, thrust_force;
-		bool show_gui;
-		
-		//Thrust Particle Effect
-		ParticleEmitter thrusters;
-		//Octree
-
-		//Collision
 
 		
+		// textures
+		//
+		ofTexture  particleTex;
+
+		// shaders
+		//
+		ofVbo vbo;
+		ofShader shader;
 };
