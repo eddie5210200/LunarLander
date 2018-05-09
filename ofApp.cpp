@@ -90,8 +90,9 @@ void ofApp::setup() {
     
     sys.addForce(&thruster);
     sys.addForce(&impulseForce);
-    sys.addForce(new TurbulenceForce(ofVec3f(-0.2, -0.1, -0.3), ofVec3f(0.1, 0.2, 0.5)));
     sys.addForce(new GravityForce(ofVec3f(0, -gravity, 0)));
+    sys.addForce(new TurbulenceForce(ofVec3f(-0.2, -0.1, -0.3), ofVec3f(0.1, 0.2, 0.5)));
+   
 }
 
 //--------------------------------------------------------------
@@ -99,7 +100,10 @@ void ofApp::setup() {
 //
 void ofApp::update() {
     if (!landed) {
+        GravityForce *grav = (GravityForce*)sys.forces.at(2);
+        grav->set(ofVec3f(0, -gravity, 0));
         sys.update();
+        
         engine.update();
         engine.setPosition(sys.particles[0].position);
         rover.setPosition(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z);
@@ -131,6 +135,7 @@ void ofApp::draw() {
     ofBackground(ofColor::black);
        // cout << ofGetFrameRate() << endl;
     ofSetColor(ofColor::white);
+    
     string AGL;
     AGL += "AGL: " + std::to_string(displayAGL());
     ofDrawBitmapString(AGL, 10, 85);
