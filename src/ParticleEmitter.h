@@ -19,7 +19,6 @@ public:
     ofVec3f getPosition();
     void addPosition(const ofVec3f);
 	void setLifespan(const float life)   { lifespan = life; }
-    void setPosition(const ofVec3f &pos) { position = pos ; }
 	void setVelocity(const ofVec3f &vel) { velocity = vel; }
 	void setRate(const float r) { rate = r; }
 	void setParticleRadius(const float r) { particleRadius = r; }

@@ -47,6 +47,7 @@ public:
     void subDivideBox8(const Box &b, vector<Box> &boxList);
     void generateTree(const Box &boundingBox, const ofMesh &mesh, int maxDepth, Octree &octree);
     void generateTreeNodes(Box &node, const std::map<int, ofVec3f> &vertexList, int currentDepth, int maxDepth);
+    float displayAGL();
     
     bool mouseIntersectPlane(ofVec3f planePoint, ofVec3f planeNorm, ofVec3f &point);
     

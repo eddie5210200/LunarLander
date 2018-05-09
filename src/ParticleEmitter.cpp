@@ -141,7 +141,7 @@ void ParticleEmitter::spawn(float time) {
 	{
 		particle.velocity = velocity;
 		int angle = ofRandom(0, 360);
-		ofVec3f pos = ofVec3f(position.x, position.y, 0);
+		ofVec3f pos = ofVec3f(position.x, position.y, position.z);
 		ofVec3f mag = ofVec3f(sin(angle) * ofRandom(0, discradius), 0, cos(angle) * ofRandom(0, discradius));
 		particle.position.set(pos + mag);
 	}

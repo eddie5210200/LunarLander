@@ -70,7 +70,7 @@ void ofApp::setup() {
 	roverZ = (roverBox.max().z() + roverBox.min().z()) / 2;
 	center = ofVec3f(roverX, roverY, roverZ);
 	// cout << "Center point is: " << center << endl;
-	rover.setPosition(roverX, roverY, roverZ);
+	rover.setPosition(roverX, roverY + 10, roverZ);
 
 	// compute emitter location based on rover bounding box
 	bottom = ofVec3f(roverX, roverBox.min().y(), roverZ);
@@ -82,7 +82,7 @@ void ofApp::setup() {
 
 	gui.setup();
 	gui.add(sliderOctreeDepth.setup("Octree depth", 0, 0, octreeHighestDepth));
-	gui.add(gravity.setup("Gravity", 0.1, 0, 2)); // Need to connect gui slider to actual slider and update in-app
+	gui.add(gravity.setup("Gravity", 0.2, 0, 2)); // Need to connect gui slider to actual slider and update in-app
 
 	//  setup emitter (for engine)
 	//
@@ -93,7 +93,7 @@ void ofApp::setup() {
 
 	// setup thruster emission effect
 	//thruster_emitter.sys->addForce(new GravityForce(ofVec3f(0, -2*gravity, 0)));
-	thruster_emitter.setVelocity(ofVec3f(0, 0, 0));
+	thruster_emitter.setVelocity(ofVec3f(0, -5, 0));
 	thruster_emitter.setGroupSize(50);
 	thruster_emitter.setEmitterType(DiscEmitter);
 	thruster_emitter.setColor(ofColor(255, 0, 0));
@@ -108,7 +108,7 @@ void ofApp::setup() {
 	// "Ship" is the particle that the lander is mapped to
 	ship.color = ofColor::green;
 	ship.lifespan = 10000;
-	ship.position.set(roverX, roverY, roverZ);
+	ship.position.set(roverX, roverY + 10, roverZ);
 	sys.add(ship);
 
 	sys.addForce(&thruster);
@@ -122,12 +122,16 @@ void ofApp::setup() {
 //
 void ofApp::update() {
 	if (!landed) {
-		sys.update();
 		//engine.update();
 		//engine.setPosition(sys.particles[0].position);
+        GravityForce *grav = (GravityForce*)sys.forces.at(2);
+        grav->set(ofVec3f(0, -gravity, 0));
+        sys.update();
+        
 		thruster_emitter.update();
-		rover.setPosition(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z);
-        thruster_emitter.setPosition(sys.particles[0].position + ofVec3f(0, 0.4, 0));
+        thruster_emitter.setPosition(sys.particles[0].position + ofVec3f(0, 0.5, 0));
+        
+        rover.setPosition(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z);
 		// check if rover point intersects with terrain mesh
 		// if list is not empty, print out first point collided
 		vector<int> selectedPoint = getCollision(octree.root, sys.particles[0].position);
@@ -136,9 +140,14 @@ void ofApp::update() {
 			// Find the closest vertex
 			int closestVertex = selectedPoint[0];
 			ofVec3f selected = marsMesh.getVertex(closestVertex);
-			cout << "Collision detected at: " << selected << endl;
-			landed = true;
-			impulseForce.apply(60 * sys.particles[0].velocity);
+            if (sys.particles[0].position.y > 20) { // rover is too high
+                landed = false;
+            }
+            else {
+                landed = true;
+                cout << "Collision detected at: " << selected << endl;
+            }
+            sys.particles[0].forces = ofVec3f(0, 0, 0);
 		}
 	}
 	camera->spacecraft = rover.getPosition();
@@ -149,7 +158,7 @@ void ofApp::draw() {
 	//    ofBackgroundGradient(ofColor(20), ofColor(0));   // pick your own backgroujnd
 	ofBackground(ofColor::black);
 	//    cout << ofGetFrameRate() << endl;
-
+    
 	ofEnableDepthTest();
 
 	//start camera
@@ -187,7 +196,11 @@ void ofApp::draw() {
 			// ofSetColor(ofColor::blue);
 			// ofDrawSphere(center, 0.1);
 			// ofDrawSphere(bottom, 0.05);
-			if (!bTerrainSelected);// drawAxis(rover.getPosition());
+			//if (!bTerrainSelected); drawAxis(rover.getPosition());
+            
+            //draw emission
+            ofFill();
+            thruster_emitter.draw();
 		}
 		if (bTerrainSelected);// drawAxis(ofVec3f(0, 0, 0));
 	}
@@ -206,8 +219,8 @@ void ofApp::draw() {
 	}
 
 	ofNoFill();
-	ofSetColor(ofColor::red);
-	drawBox(boundingBox);
+	//ofSetColor(ofColor::red);
+	//drawBox(boundingBox);
     // drawBox(roverBox);
     
 	// draw octree
@@ -218,10 +231,6 @@ void ofApp::draw() {
 		drawOctree(octree.root);
 	}
 
-	//draw emission
-    ofFill();
-	thruster_emitter.draw();
-
 	//close camera
 	ofPopMatrix();
 	camera->camera_end();
@@ -230,6 +239,12 @@ void ofApp::draw() {
 	if (!bHide) {
 		gui.draw();
 	}
+    
+    string AGL;
+    AGL += "AGL: " + std::to_string(displayAGL());
+    ofFill();
+    ofSetColor(255, 255, 255, 255);
+    ofDrawBitmapString(AGL, 10, 85);
 }
 
 // Draw an XYZ axis in RGB at world (0,0,0) for reference.
@@ -343,7 +358,7 @@ void ofApp::keyPressed(int key) {
 	case ' ':
 		if (!landed) {
 			// playSound();
-			thruster_emitter.setVelocity(ofVec3f(0, -5, 0));
+			//thruster_emitter.setVelocity(ofVec3f(0, -5, 0));
 			if (!thruster_emitter.started) thruster_emitter.start();
 			thruster.add(ofVec3f(0, .5, 0));
 			//engine.setVelocity(ofVec3f(0, -5, 0));
@@ -483,45 +498,34 @@ void ofApp::keyReleased(int key) {
 void ofApp::mouseMoved(int x, int y) {
 }
 
+// added agl method, need to display on top right
+float ofApp::displayAGL() {
+    float result = 0;
+    ofVec3f selected = ofVec3f(0,0,0);
+    
+    Ray ray = Ray(Vector3(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z),
+                  Vector3(0, -1, 0));
+    vector<int> selectedVertices = getIntersectingVertices(octree.root, ray);
+    
+    if (selectedVertices.size() != 0) {
+        // Find the closest vertex
+        int closestVertex = selectedVertices[0];
+        for (int i : selectedVertices) {
+            if (marsMesh.getVertex(i).y > marsMesh.getVertex(closestVertex).y
+                && marsMesh.getVertex(closestVertex).y > 20)
+                closestVertex = i;
+            
+        }
+        selected = marsMesh.getVertex(closestVertex);
+    }
+    
+    result = sys.particles[0].position.y - selected.y;
+    return result;
+}
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button) {
-	auto start = ofGetElapsedTimeMicros();
-
-	// create ray based on camera to screenspace
-	ofVec3f mouse(mouseX, mouseY);
-	ofVec3f rayPoint = cam.screenToWorld(mouse);
-	ofVec3f rayDir = rayPoint - cam.getPosition();
-	rayDir.normalize();
-	// first parameter is "bottom"
-	// down y-axis
-	Ray ray = Ray(Vector3(rayPoint.x, rayPoint.y, rayPoint.z),
-		Vector3(rayDir.x, rayDir.y, rayDir.z));
-
-	// get list of vertex indices that intersect ray
-	vector<int> selectedVertices = getIntersectingVertices(octree.root, ray);
-
-	if (selectedVertices.size() != 0) {
-		// Find the closest vertex
-		int closestVertex = selectedVertices[0];
-		for (int i : selectedVertices) {
-			if (marsMesh.getVertex(i).squareDistance((cam.getPosition())) < marsMesh.getVertex(closestVertex).squareDistance((cam.getPosition())))
-				closestVertex = i;
-		}
-
-		selectedPoint = marsMesh.getVertex(closestVertex);
-		bPointSelected = true;
-
-		// Calculate vertex selection time
-		auto end = ofGetElapsedTimeMicros();
-		auto duration = end - start;
-
-		cout << "Selected point " << closestVertex << " at " << selectedPoint << " in "
-			<< duration << " microseconds" << endl;
-	}
-	else {
-		bPointSelected = false;
-	}
+    
 }
 
 // Checks which vetices intersect with ray; returns vertex indices of intersection,
