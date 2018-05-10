@@ -24,14 +24,16 @@ void Particle::draw() {
     // saturation: 255 -> 0
     // brightness: 255 -> 0
     // alpha: 50 -> 0
+	/*
     float newHue = 0 + (25.0 / (1000.0 * colorLifetime)) * (ofGetElapsedTimeMillis() - birthtime);
     float newSaturation = 255 - (255.0 / (1000.0 * colorLifetime)) * (ofGetElapsedTimeMillis() - birthtime);
     float newBrightness = 255 - (255.0 / (1000.0 * colorLifetime)) * (ofGetElapsedTimeMillis() - birthtime);
     float newAlpha = 50.0 - (50.0 / (1000.0 * colorLifetime)) * (ofGetElapsedTimeMillis() - birthtime);
     
     color.setHsb(newHue, newSaturation, newBrightness, newAlpha);
-
-    ofSetColor(color);
+	*/
+	ofSetColor(ofMap(age(), 0, lifespan * 10, 255, 10), 0, 0);
+	
 	ofDrawSphere(position, radius);
 }
 

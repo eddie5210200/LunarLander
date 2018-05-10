@@ -39,6 +39,7 @@ public:
     void togglePointSelectedOctree();
     void setCameraTarget();
     bool doPointSelection();
+	void loadVbo();
     vector<int> getIntersectingVertices(Box &box, const Ray &ray);
     vector<int> getCollision(Box &box, const ofVec3f &point);
     void drawBox(const Box &box);
@@ -91,7 +92,6 @@ public:
     ParticleSystem sys;
 	ParticleEmitter thruster_emitter;
     ThrusterForce thruster;
-    //ParticleEmitter engine;
     Particle ship;
 
 	//Camera
@@ -100,6 +100,15 @@ public:
     ImpulseForce impulseForce;  // create the impulse force
     
     ofSoundPlayer soundPlayer;
-    bool soundFileLoaded = false;
+
+	// textures
+	//
+	ofTexture  particleTex;
+    ofImage background;
+
+	// shaders
+	//
+	ofVbo vbo;
+	ofShader shader;
 };
 

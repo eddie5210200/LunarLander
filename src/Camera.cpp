@@ -2,7 +2,7 @@
 
 void Camera::setup() {
 	spacecraft = ofVec3f(0, 5, 0);
-	far_position = ofVec3f(200, 0, 0);
+	far_position = ofVec3f(40, 10, 0);
 
 	cam.setDistance(10);
 	cam.setNearClip(.1);
@@ -14,9 +14,8 @@ void Camera::setup() {
 
 	down_view.setNearClip(.1);
 	down_view.setFov(65.5);
-	//down_view.setLensOffset(ofVec2f(0, -3)); //or 270 to look downward
 
-	far_view.setDistance(50);
+	far_view.setDistance(30);
 	far_view.setFarClip(2000);
 	far_view.setFov(65.5);
 	far_view.disableMouseInput();
@@ -30,18 +29,19 @@ void Camera::camera_begin() {
 	switch (camera_number) {
 	case 0:
 		//ofTranslate(spacecraft);
-		front_view.setPosition(spacecraft);
+		front_view.setPosition(spacecraft + ofVec3f(0, 2, -2));
 		front_view.begin();
 		break;
 	case 1:
 		//ofTranslate(spacecraft);
 		down_view.setPosition(spacecraft);
-        far_view.setTarget(spacecraft - ofVec3f(0, -1, 0));
+		//down_view.setDistance(10);
+        down_view.setTarget(ofVec3f(spacecraft.x, 0, spacecraft.z));
 		down_view.begin();
 		break;
 	case 2:
-		ofTranslate(far_position);
-		front_view.setPosition(0, 0, 0);
+		//ofTranslate(far_position);
+		far_view.setPosition(far_position);
 		far_view.begin();
 		far_view.setTarget(spacecraft);
 		break;
